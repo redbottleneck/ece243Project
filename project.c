@@ -20,6 +20,13 @@
 // Sample mode: 0 = day (every point), 1 = week (last day of week), 2 = month (last day of month)
 #define SAMPLE_MODE 1
 
+//PS2 Keyboard 
+#define PS2_BASE 0xFF200100 // PS2_Data register address
+#define PS2_CONTROL 0xFF200104 // PS2_Control register address
+
+// Mask for checking RVALID bit (bit 15 of PS2_Data)
+#define RVALID_MASK 0x8000
+
 
 #define WHITE 0xFFFF
 #define BLACK 0x0000
@@ -608,6 +615,17 @@ static const uint16_t graph_screen[] = {
 // Main function
 //---------------------------------------------------------------------
 int main(void) {
+	//Declare  pointers to I/O registers 
+    volatile int *PS2_ptr = (int *)PS2_BASE;        // Pointer to PS2_Data
+    volatile int *PS2_ctrl_ptr = (int *)PS2_CONTROL; // Pointer to PS2_Control
+
+    int PS2_data;
+    char byte1 = 0, byte2 = 0, byte3 = 0;
+
+    // PS/2 mouse needs to be reset (must be already plugged in)
+    *(PS2_ptr) = 0xFF; // Reset the PS/2 device
+
+	
     volatile int *pixel_ctrl_ptr = (int *)0xFF203020;
     pixel_buffer_start = *pixel_ctrl_ptr;
     clear_screen();
@@ -619,7 +637,7 @@ int main(void) {
 		 }
 	 }
 	
- 	// Initialize apple stock
+	// Initialize apple stock
     Stock stock1;
     stock1.dates = global_date;
     stock1.values = apple_price;
@@ -627,14 +645,14 @@ int main(void) {
     stock1.name = "apple";
 	stock1.color = 0x6A9F;
     init_stock(&stock1);  // Precompute parsed dates
-
- 	// Initialize meta stock
+	
+	// Initialize amazon stock
     Stock stock2;
     stock2.dates = global_date;
-    stock2.values = meta_price;
+    stock2.values = amazon_price;
     stock2.size = SIZE;
-    stock2.name = "meta";
-	stock2.color = 0x1C7F;
+    stock2.name = "amazon";
+	stock2.color = 0xFEA0;
     init_stock(&stock2);  // Precompute parsed dates
 	
  	// Initialize google stock
@@ -646,24 +664,24 @@ int main(void) {
 	stock3.color = 0x07E0;
     init_stock(&stock3);  // Precompute parsed dates
 	
- 	// Initialize netflix stock
+	// Initialize meta stock
     Stock stock4;
     stock4.dates = global_date;
-    stock4.values = netflix_price;
+    stock4.values = meta_price;
     stock4.size = SIZE;
-    stock4.name = "netflix";
-	stock4.color = 0xF800;
+    stock4.name = "meta";
+	stock4.color = 0x1C7F;
     init_stock(&stock4);  // Precompute parsed dates
 	
-	// Initialize amazon stock
+ 	// Initialize netflix stock
     Stock stock5;
     stock5.dates = global_date;
-    stock5.values = amazon_price;
+    stock5.values = netflix_price;
     stock5.size = SIZE;
-    stock5.name = "amazon";
-	stock5.color = 0xFEA0;
+    stock5.name = "netflix";
+	stock5.color = 0xF800;
     init_stock(&stock5);  // Precompute parsed dates
-
+	
 	volatile int *KEY_ptr = (volatile int *)0xFF200050;
 	// edge capture reg is offset  3 words
     volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
@@ -672,22 +690,51 @@ int main(void) {
 	 //cheack key inputs
 	 while(1){
 		 
-	 // read the bit, same as lw (derefence pointer)
-     int edge_capture = *Key_edgeCapture_ptr;
+		 PS2_data = *(PS2_ptr);//read data reg
+        
+        // Check if new data is available (RVALID = 1 if bit 15 is set)
+        if (PS2_data & RVALID_MASK) {
+            // Shift the bytes to store the last three inputs
+            byte1 = byte2;
+            byte2 = byte3;
+            byte3 = PS2_data & 0xFF; //extract the last byte
+
+            // check for key presses
+            if (byte3 == 0x16) {
+                draw_stock(&stock1);
+            } else if (byte3 == 0x1E) {
+                draw_stock(&stock2);
+            } else if (byte3 == 0x26) {
+                draw_stock(&stock3);
+            } else if (byte3 == 0x25) {
+                draw_stock(&stock4);
+            } else if (byte3 == 0x2E) {
+               draw_stock(&stock5);
+            }
+
+        }
+		 
+
+	 int edge_capture = *Key_edgeCapture_ptr;
 		 
 	 if(edge_capture & 0x1){
-		 
-		draw_stock(&stock1);
-	    draw_stock(&stock2);
-		draw_stock(&stock3);
-		draw_stock(&stock4);
-		draw_stock(&stock5);
-		 
+		 	
+		//printing new background
+		for(int i=0; i<320; i++){
+			 for(int j = 0; j<240; j++){
+				 plot_pixel(i,j, graph_screen[i+(j*320)]);
+			 }
+		 }
+
+		//drawing axis
+		draw_line(40, 220, 300, 220, 0xFFFF); // x-axis
+		draw_line(40, 220, 40, 20, 0xFFFF); // y-axis
 
 		 // clear edgecap for KEY0
          *Key_edgeCapture_ptr= 0x1;
 		 
 	 }
+
 	 	 
  }
   
