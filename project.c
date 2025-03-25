@@ -54,7 +54,7 @@ void init_stock(Stock *s);
 void write_char(int x, int y, char c);
 void print_string(int x, int y, const char *str);
 
-void calculate_x_divisions(const char *global_date[], int size);
+void calculate_x_divisions(const char *global_date[], int size, int *window_indices);
 void calculate_y_divisions(float arr[], int size, float divisions[]);
 int map_vga_y_to_char_y(int vga_y);
 int map_vga_x_to_char_x(int vga_x);
@@ -67,7 +67,7 @@ int sample_data(Stock *s, int *sample_indices, int *filter_indices, int filter_c
 int select_window(int *window_indices, int *sample_indices, int sample_count, int window_size);
 void compute_sample_min_max(Stock *s, int *sample_indices, int count, float *min, float *max);
 void normalize_samples(Stock *s, int *sample_indices, int count, float sample_min, float sample_max, int *normalized);
-void draw_graph(int *normalized, int count, short int color);
+void draw_graph(int *normalized, int count, short int color,int *arr);
 
 //---------------------------------------------------------------------
 // Global variable: pixel buffer start address.
@@ -813,7 +813,7 @@ void normalize_samples(Stock *s, int *sample_indices, int count, float sample_mi
 }
 
 // Draw the graph by connecting the normalized points.
-void draw_graph(int *normalized, int count, short int color) {
+void draw_graph(int *normalized, int count, short int color,int *arr) {
 	
 	//clear screen
 	volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
@@ -828,14 +828,14 @@ void draw_graph(int *normalized, int count, short int color) {
 	 }
 	
     //drawing axis
-	draw_line(40, 220, 300, 220, 0x0000); // x-axis
-	draw_line(40, 220, 40, 20, 0x0000); // y-axis
+	draw_line(40, 220, 300, 220, 0xFFFF); // x-axis
+	draw_line(40, 220, 40, 20, 0xFFFF); // y-axis
 
 
     // Calculate and display y-axis labels
-    int y_divisions[5];
+    float y_divisions[5];
     calculate_y_divisions(apple_price, SIZE, y_divisions);
-	calculate_x_divisions(global_date, SIZE);
+	calculate_x_divisions(global_date, count,arr);
 
     for (int j = 0; j < count - 1; j++) {
         int x0 = GRAPH_WIDTH_PADDING + j;
@@ -884,7 +884,7 @@ print_string(4, map_vga_y_to_char_y(219), buffer);
 
 }
 
-void calculate_x_divisions(const char *global_date[], int size) {
+void calculate_x_divisions(const char *global_date[], int size, int *window_indices) {
 	
     // Determine key indices (start, middle, end)
     int start = 0;
@@ -892,9 +892,9 @@ void calculate_x_divisions(const char *global_date[], int size) {
     int end = size - 1;
 
     // Display the start, middle, and end dates on the x-axis
-    print_string(map_vga_x_to_char_x(40), map_vga_y_to_char_y(230), global_date[start]);
-    print_string(map_vga_x_to_char_x(165), map_vga_y_to_char_y(230), global_date[mid]);
-    print_string(map_vga_x_to_char_x(275), map_vga_y_to_char_y(230), global_date[end]);
+    print_string(map_vga_x_to_char_x(40), map_vga_y_to_char_y(230), global_date[window_indices[start]]);
+    print_string(map_vga_x_to_char_x(165), map_vga_y_to_char_y(230), global_date[window_indices[mid]]);
+    print_string(map_vga_x_to_char_x(275), map_vga_y_to_char_y(230), global_date[window_indices[end]]);
 	
 }
 
@@ -956,7 +956,7 @@ void draw_stock(Stock *s) {
     int normalized[GRAPH_WIDTH];
     normalize_samples(s, window_indices, window_count, sample_min, sample_max, normalized);
 
-    draw_graph(normalized, window_count, s->color);
+    draw_graph(normalized, window_count, s->color,  window_indices);
 }
 
 // Plot a single pixel at (x,y) with the given color.
