@@ -50,12 +50,14 @@ void draw_line(int x0, int y0, int x1, int y1, short int line_color);
 void swap(int* x, int* y);
 time_t parse_date(const char *date_str);
 void init_stock(Stock *s);
-//rehan func
+
 void write_char(int x, int y, char c);
 void print_string(int x, int y, const char *str);
-//rehan Axis function declarations
+
+void calculate_x_divisions(const char *global_date[], int size);
 void calculate_y_divisions(float arr[], int size, float divisions[]);
-map_vga_y_to_char_y(int vga_y);
+int map_vga_y_to_char_y(int vga_y);
+int map_vga_x_to_char_x(int vga_x);
 
 
 
@@ -114,23 +116,51 @@ int main(void) {
     volatile int *pixel_ctrl_ptr = (int *)0xFF203020;
     pixel_buffer_start = *pixel_ctrl_ptr;
     clear_screen();
- // Create and initialize a stock.
+	
+ 	// Initialize apple stock
     Stock stock1;
     stock1.dates = global_date;
     stock1.values = apple_price;
     stock1.size = SIZE;
     stock1.name = "apple";
-	stock1.color = 0xF800;
+	stock1.color = 0x6A9F;
     init_stock(&stock1);  // Precompute parsed dates
 
-	    // Create and initialize a stock.
+ 	// Initialize meta stock
     Stock stock2;
     stock2.dates = global_date;
     stock2.values = meta_price;
     stock2.size = SIZE;
     stock2.name = "meta";
-	stock2.color = 0x07E0;
+	stock2.color = 0x1C7F;
     init_stock(&stock2);  // Precompute parsed dates
+	
+ 	// Initialize google stock
+    Stock stock3;
+    stock3.dates = global_date;
+    stock3.values = google_price;
+    stock3.size = SIZE;
+    stock3.name = "google";
+	stock3.color = 0x07E0;
+    init_stock(&stock3);  // Precompute parsed dates
+	
+ 	// Initialize netflix stock
+    Stock stock4;
+    stock4.dates = global_date;
+    stock4.values = netflix_price;
+    stock4.size = SIZE;
+    stock4.name = "netflix";
+	stock4.color = 0xF800;
+    init_stock(&stock4);  // Precompute parsed dates
+	
+	// Initialize amazon stock
+    Stock stock5;
+    stock5.dates = global_date;
+    stock5.values = amazon_price;
+    stock5.size = SIZE;
+    stock5.name = "amazon";
+	stock5.color = 0xFEA0;
+    init_stock(&stock5);  // Precompute parsed dates
 
 	volatile int *KEY_ptr = 0xFF200050;
 	// edge capture reg is offset  3 words
@@ -147,6 +177,11 @@ int main(void) {
 		 
 		draw_stock(&stock1);
 	    draw_stock(&stock2);
+		draw_stock(&stock3);
+		draw_stock(&stock4);
+		draw_stock(&stock5);
+		 
+
 		 // clear edgecap for KEY0
          *Key_edgeCapture_ptr= 0x1;
 		 
@@ -285,6 +320,7 @@ void draw_graph(int *normalized, int count, short int color) {
     // Calculate and display y-axis labels
     int y_divisions[5];
     calculate_y_divisions(apple_price, SIZE, y_divisions);
+	calculate_x_divisions(global_date, SIZE);
 
     for (int j = 0; j < count - 1; j++) {
         int x0 = GRAPH_WIDTH_PADDING + j;
@@ -333,10 +369,30 @@ print_string(4, map_vga_y_to_char_y(219), buffer);
 
 }
 
+void calculate_x_divisions(const char *global_date[], int size) {
+	
+    // Determine key indices (start, middle, end)
+    int start = 0;
+    int mid = size / 2;
+    int end = size - 1;
+
+    // Display the start, middle, and end dates on the x-axis
+    print_string(map_vga_x_to_char_x(40), map_vga_y_to_char_y(230), global_date[start]);
+    print_string(map_vga_x_to_char_x(165), map_vga_y_to_char_y(230), global_date[mid]);
+    print_string(map_vga_x_to_char_x(275), map_vga_y_to_char_y(230), global_date[end]);
+	
+}
+
 int map_vga_y_to_char_y(int vga_y) {
     if (vga_y < 0) vga_y = 0;  // Clamp to min
     if (vga_y > 239) vga_y = 239;  // Clamp to max
     return (vga_y * 60) / 240;  // Scale VGA Y to Character Buffer Y
+}
+
+int map_vga_x_to_char_x(int vga_x) {
+    if (vga_x < 0) vga_x = 0;    // Clamp to min
+    if (vga_x > 319) vga_x = 319;  // Clamp to max
+    return vga_x / 4;            // Scale VGA X to Character Buffer X
 }
 
 // Function to write a character to the character buffer at (x, y)
