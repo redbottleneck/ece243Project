@@ -884,14 +884,14 @@ if(!(data < 50 && data > -50)){mousestate =0;}
 		for(int i = 0; i< 5 ; i++){
 			for(int j = 0; j<5; j++){
 
-				plot_pixel(i+mousex,j+mousey,0x0000);;
+				plot_pixel(i+mouselocx,j+mouselocy,0x0000);;
 			}
 
 		}
 	
-	printf("x: %d. y: %d \n",mousex,mousey);
+	printf("x: %d. y: %d \n",mouselocx,mouselocy);
 		mouselocx += mousex;
-		mouselocx += mousey;
+		mouselocy += mousey;
 	if(mouselocx < 0){ mouselocx = 0 ;}
 	if(mouselocx > 320){ mouselocx = 320 ;}
 	if(mouselocy < 0){ mouselocy = 0;}
