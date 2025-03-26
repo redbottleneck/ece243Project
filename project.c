@@ -10,15 +10,9 @@
 
 // Graph dimensions and padding
 #define GRAPH_HEIGHT 210 
-#define GRAPH_HEIGHT_PADDING 20   // from bottom
-#define GRAPH_WIDTH 300
-#define GRAPH_WIDTH_PADDING 40    // from left
-
-#define SELECTED_YEAR_START 2019
-#define YEAR_RANGE 4  // number of years to include
-
-// Sample mode: 0 = day (every point), 1 = week (last day of week), 2 = month (last day of month)
-#define SAMPLE_MODE 1
+#define GRAPH_HEIGHT_PADDING 10   // from bottom
+#define GRAPH_WIDTH 235
+#define GRAPH_WIDTH_PADDING 30    // from left
 
 //PS2 Keyboard 
 #define PS2_BASE 0xFF200100 // PS2_Data register address
@@ -62,7 +56,7 @@ void write_char(int x, int y, char c);
 void print_string(int x, int y, const char *str);
 
 void calculate_x_divisions(const char *global_date[], int size, int *window_indices);
-void calculate_y_divisions(int *window_indices, int size, float* values);
+void calculate_y_divisions();
 int map_vga_y_to_char_y(int vga_y);
 int map_vga_x_to_char_x(int vga_x);
 
@@ -80,6 +74,12 @@ void draw_graph(int *normalized, int count, Stock *s,int *arr);
 // Global variable: pixel buffer start address.
 //---------------------------------------------------------------------
 volatile int pixel_buffer_start; // variable for frame buffer
+// Sample mode: 0 = day (every point), 1 = week (last day of week), 2 = month (last day of month)
+int SAMPLE_MODE = 1;
+
+int SELECTED_YEAR_START = 2019;
+int YEAR_RANGE = 4;  // number of years to include
+ float sample_min, sample_max;
 
 //---------------------------------------------------------------------
 // Global data arrays for one stock
@@ -682,16 +682,18 @@ int main(void) {
 	stock5.color = 0xF800;
     init_stock(&stock5);  // Precompute parsed dates
 	
+	Stock* stocks_arr[5] = {&stock1,&stock2,&stock3,&stock4,&stock5};
+	
 	volatile int *KEY_ptr = (volatile int *)0xFF200050;
 	// edge capture reg is offset  3 words
     volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
 	 
-	 
+	          int current_stock = 1;//start at stock 1 for any button
 	 //cheack key inputs
 	 while(1){
 		 
 		 PS2_data = *(PS2_ptr);//read data reg
-        
+
         // Check if new data is available (RVALID = 1 if bit 15 is set)
         if (PS2_data & RVALID_MASK) {
             // Shift the bytes to store the last three inputs
@@ -699,17 +701,43 @@ int main(void) {
             byte2 = byte3;
             byte3 = PS2_data & 0xFF; //extract the last byte
 
+// int YEAR_RANGE = 4;  // number of years to include
             // check for key presses
             if (byte3 == 0x16) {
+				current_stock = 1;
                 draw_stock(&stock1);
             } else if (byte3 == 0x1E) {
+				current_stock = 2;				
                 draw_stock(&stock2);
             } else if (byte3 == 0x26) {
-                draw_stock(&stock3);
+				current_stock = 3;
+				draw_stock(&stock3);
             } else if (byte3 == 0x25) {
-                draw_stock(&stock4);
+				current_stock = 4;
+				draw_stock(&stock4);
             } else if (byte3 == 0x2E) {
-               draw_stock(&stock5);
+				current_stock = 5;
+				draw_stock(&stock5);
+            } else if (byte2 == 0xE0 && byte3 == 0x6B)  {
+				if(SAMPLE_MODE > 0) SAMPLE_MODE--;
+                draw_stock(stocks_arr[current_stock - 1]);
+            } else if (byte2 == 0xE0 && byte3 == 0x74) {
+			    if(SAMPLE_MODE < 2) SAMPLE_MODE++;
+                draw_stock(stocks_arr[current_stock - 1]);
+            } else if (byte2 == 0xE0 && byte3 == 0x72) {
+				if(SELECTED_YEAR_START > 2015) SELECTED_YEAR_START--;
+                draw_stock(stocks_arr[current_stock - 1]);
+            } else if (byte2 == 0xE0 && byte3 == 0x75) {
+				if(SELECTED_YEAR_START < 2024) SELECTED_YEAR_START++;
+                draw_stock(stocks_arr[current_stock - 1]);
+            }
+			 else if (byte3 == 0x4E) {
+				if(YEAR_RANGE >1) YEAR_RANGE--;
+                draw_stock(stocks_arr[current_stock - 1]);
+            }
+			 else if (byte3 == 0x55) {
+				if(YEAR_RANGE < 10) YEAR_RANGE++;
+                draw_stock(stocks_arr[current_stock - 1]);
             }
 
         }
@@ -862,11 +890,6 @@ void normalize_samples(Stock *s, int *sample_indices, int count, float sample_mi
 // Draw the graph by connecting the normalized points.
 void draw_graph(int *normalized, int count, Stock *s,int *arr) {
 	
-	//clear screen
-	volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
-	pixel_buffer_start = *pixel_ctrl_ptr;
-	clear_screen();
-	
 	//printing new background
 	for(int i=0; i<320; i++){
 		 for(int j = 0; j<240; j++){
@@ -875,45 +898,47 @@ void draw_graph(int *normalized, int count, Stock *s,int *arr) {
 	 }
 	
     //drawing axis
-	draw_line(40, 220, 300, 220, 0xFFFF); // x-axis
-	draw_line(40, 220, 40, 20, 0xFFFF); // y-axis
+	draw_line(GRAPH_WIDTH_PADDING, 240-GRAPH_HEIGHT_PADDING, 275, 240-GRAPH_HEIGHT_PADDING, 0xFFFF); // x-axis
+	draw_line(GRAPH_WIDTH_PADDING, 240-GRAPH_HEIGHT_PADDING, GRAPH_WIDTH_PADDING, 20, 0xFFFF); // y-axis
 
+		
+	//clear screen
+	volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
+	pixel_buffer_start = *pixel_ctrl_ptr;
+	clear_screen();
 
     // Calculate and display y-axis labels
-    calculate_y_divisions(arr, count, s->values);
+    calculate_y_divisions();
 	calculate_x_divisions(global_date, count,arr);
 
+   // Use a float to avoid integer truncation:
+    float xscale = (float)(GRAPH_WIDTH - 1) / (float)(count - 1);
+
     for (int j = 0; j < count - 1; j++) {
-        int x0 = GRAPH_WIDTH_PADDING + j;
-        int x1 = GRAPH_WIDTH_PADDING + j + 1;
+        // Scale the j-th sample from [0 .. count-1] into [0 .. GRAPH_WIDTH-1]
+        int x0 = GRAPH_WIDTH_PADDING + (int)(j * xscale);
+        int x1 = GRAPH_WIDTH_PADDING + (int)((j + 1) * xscale);
+
         int y0 = normalized[j];
         int y1 = normalized[j + 1];
         draw_line(x0, y0, x1, y1, s->color);
     }
+    
 }
 
-void calculate_y_divisions(int *window_indices, int size, float* values) {
+void calculate_y_divisions() {
 
     char buffer[20];
     char buffer1[20];
     char buffer2[20];
     char buffer3[20];
     char buffer4[20];
-    // Find min and max values
-    float min_val = values[0];
-    float max_val = values[0];
-    for (int i = 1; i < size; i++) {
-        if (values[window_indices[i]] < min_val) min_val = values[window_indices[i]] ;
-        if (values[window_indices[i]] > max_val) max_val = values[window_indices[i]] ;
-    }
-
-
 //print_string(20, 20, "done part2");
     // Calculate division intervals
-    float step = (max_val - min_val) / 4; // 5 divisions, 4 gaps
+    float step = (sample_max - sample_min) / 4; // 5 divisions, 4 gaps
 	float divisions[5];
     for (int i = 0; i < 5; i++) {
-        divisions[i] = min_val + i * step;
+        divisions[i] = sample_min + i * step;
     }
 
 snprintf(buffer, sizeof(buffer), "%.2f", divisions[0]);
@@ -922,12 +947,14 @@ snprintf(buffer2, sizeof(buffer2), "%.2f", divisions[2]);
 snprintf(buffer3, sizeof(buffer3), "%.2f", divisions[3]);
 snprintf(buffer4, sizeof(buffer4), "%.2f", divisions[4]);
 
+		int step2 = (int)(240-GRAPH_HEIGHT_PADDING - 20)/4;
+		int offset2 = 12;
 
-print_string(3, map_vga_y_to_char_y(20), buffer4);  
-print_string(3, map_vga_y_to_char_y(70), buffer3);
-print_string(3, map_vga_y_to_char_y(120), buffer2);
-print_string(4, map_vga_y_to_char_y(170), buffer1); 
-print_string(4, map_vga_y_to_char_y(219), buffer);  
+print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + offset2), buffer4);  
+print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + step2 + offset2), buffer3);
+print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + step2*2 + offset2), buffer2);
+print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + step2*3 + offset2), buffer1); 
+print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + step2*4 + offset2), buffer);  
 
 }
 
@@ -937,12 +964,18 @@ void calculate_x_divisions(const char *global_date[], int size, int *window_indi
     int start = 0;
     int mid = size / 2;
     int end = size - 1;
-
-    // Display the start, middle, and end dates on the x-axis
-    print_string(map_vga_x_to_char_x(40), map_vga_y_to_char_y(230), global_date[window_indices[start]]);
-    print_string(map_vga_x_to_char_x(165), map_vga_y_to_char_y(230), global_date[window_indices[mid]]);
-    print_string(map_vga_x_to_char_x(275), map_vga_y_to_char_y(230), global_date[window_indices[end]]);
 	
+	int step = (int)(275 - GRAPH_WIDTH_PADDING)/4;
+	int step2 = (int)(size-1)/4;
+	
+	int offset = 15;
+	
+    // Display the start, middle, and end dates on the x-axis
+    print_string(map_vga_x_to_char_x(GRAPH_WIDTH_PADDING - offset), map_vga_y_to_char_y(237), global_date[window_indices[start]]);
+    print_string(map_vga_x_to_char_x(GRAPH_WIDTH_PADDING + step - offset), map_vga_y_to_char_y(237), global_date[window_indices[start + step2]]);
+    print_string(map_vga_x_to_char_x(GRAPH_WIDTH_PADDING+ 2*step - offset), map_vga_y_to_char_y(237), global_date[window_indices[start + step2*2]]);
+	    print_string(map_vga_x_to_char_x(GRAPH_WIDTH_PADDING+ 3*step - offset), map_vga_y_to_char_y(237), global_date[window_indices[start + step2*3]]);
+	    print_string(map_vga_x_to_char_x(GRAPH_WIDTH_PADDING+ 4*step - offset), map_vga_y_to_char_y(237), global_date[window_indices[start + step2*4]]);
 }
 
 int map_vga_y_to_char_y(int vga_y) {
@@ -997,7 +1030,7 @@ void draw_stock(Stock *s) {
            s->dates[window_indices[0]],
            s->dates[window_indices[window_count - 1]]);
 
-    float sample_min, sample_max;
+   
     compute_sample_min_max(s, window_indices, window_count, &sample_min, &sample_max);
 
     int normalized[GRAPH_WIDTH];
@@ -1060,6 +1093,6 @@ void clear_screen(void) {
     }
 
     for (int x = 0; x < SCREEN_WIDTH; x++)
-        for (int y = 0; y < SCREEN_HEIGHT; y++)
-            plot_pixel(x, y, 0);
+        for (int y = 234; y < SCREEN_HEIGHT; y++)
+            plot_pixel(x, y, 0xb596);
 }
