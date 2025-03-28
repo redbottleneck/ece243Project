@@ -64,8 +64,6 @@ struct audio_t {
 };
 
 
-    int *debugLEDs = 0xFF200000;
-
 //---------------------------------------------------------------------
 // Function declarations
 //---------------------------------------------------------------------
@@ -9997,7 +9995,7 @@ int amazon_stock_size= 16052;
 int main(void) {
 //Declare  pointers to I/O registers 
 volatile int *PS2_ptr = (int *)PS2_BASE;        // Pointer to PS2_Data
-volatile int *PS2_ctrl_ptr = (int *)PS2_CONTROL; // Pointer to PS2_Control
+//volatile int *PS2_ctrl_ptr = (int *)PS2_CONTROL; // Pointer to PS2_Control
 
 //	typedef struct {
 //	volatile unsigned char data;
@@ -10007,7 +10005,7 @@ volatile int *PS2_ctrl_ptr = (int *)PS2_CONTROL; // Pointer to PS2_Control
 //volatile unsigned char rice;
 //} Mouse;
 
-*debugLEDs = 0;
+
 int PS2_data;
 char byte1 = 0, byte2 = 0, byte3 = 0;
 
@@ -10082,7 +10080,9 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
           int current_stock = 1;//start at stock 1 for any button
  //cheack key inputs
  while(1){
-     if(PS2_ptr_mouse->rvalid & 0x80 )  {signed char data = PS2_ptr_mouse-> data ; handle_mouse(data);}      // Pointer to PS2_Data
+     if(PS2_ptr_mouse->rvalid & 0x80 )  {
+		 printf("mouse");
+		 signed char data = PS2_ptr_mouse-> data ; if(!first_draw)handle_mouse(data);}      // Pointer to PS2_Data
 
      PS2_data = *(PS2_ptr);//read data reg
 
@@ -10101,25 +10101,25 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
 
         // check for key presses
         if (byte3 == 0x16) {if(first_draw){draw_background();first_draw = false;}
-            current_stock = 1;
-			audio_playback_mono(apple_stock, apple_stock_size);							
+            current_stock = 1;					
             draw_stock(&stock1);
+			audio_playback_mono(apple_stock, apple_stock_size);									
         } else if (byte3 == 0x1E) {if(first_draw){draw_background();first_draw = false;}
-            current_stock = 2;		
-			audio_playback_mono(amazon_stock, amazon_stock_size);									   
+            current_stock = 2;											   
             draw_stock(&stock2);
+			audio_playback_mono(amazon_stock, amazon_stock_size);								   
         } else if (byte3 == 0x26) {if(first_draw){draw_background();first_draw = false;}
             current_stock = 3;
-	        audio_playback_mono(google_stock, google_stock_size);
             draw_stock(&stock3);
+	        audio_playback_mono(google_stock, google_stock_size);								   
         } else if (byte3 == 0x25) {if(first_draw){draw_background();first_draw = false;}
             current_stock = 4;
-			audio_playback_mono(facebook_stock, facebook_stock_size);
             draw_stock(&stock4);
+			audio_playback_mono(facebook_stock, facebook_stock_size);								   
         } else if (byte3 == 0x2E) {if(first_draw){draw_background();first_draw = false;}
             current_stock = 5;
-			audio_playback_mono(netflix_stock, netflix_stock_size);
             draw_stock(&stock5);
+			audio_playback_mono(netflix_stock, netflix_stock_size);
         } else if (byte2 == 0xE0 && byte3 == 0x6B)  {if(first_draw){draw_background();first_draw = false;}
             if(SAMPLE_MODE > 0) SAMPLE_MODE--;
             draw_stock(stocks_arr[current_stock - 1]);
