@@ -117,8 +117,13 @@ int prev_count = 0;
 int prev_array[GRAPH_WIDTH];
 float prev_scale = 0;
 int global_normalized[GRAPH_WIDTH];
+int window_indices[GRAPH_WIDTH];
 short int current_color = 0xc618;
 struct audio_t *const audiop = ((struct audio_t *)0xff203040);
+          int current_stock = 1;//start at stock 1 for any button
+
+
+Stock* stocks_arr[5];
 //---------------------------------------------------------------------
 // Global data arrays for one stock
 //---------------------------------------------------------------------
@@ -10070,17 +10075,55 @@ stock5.name = "netflix";
 stock5.color = 0xF800;
 init_stock(&stock5);  // Precompute parsed dates
 
-Stock* stocks_arr[5] = {&stock1,&stock2,&stock3,&stock4,&stock5};
+	
+	    stocks_arr[0] = &stock1;
+    stocks_arr[1] = &stock2;
+    stocks_arr[2] = &stock3;
+    stocks_arr[3] = &stock4;
+    stocks_arr[4] = &stock5;
+
+
 
 volatile int *KEY_ptr = (volatile int *)0xFF200050;
 // edge capture reg is offset  3 words
 volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
  
-          int current_stock = 1;//start at stock 1 for any button
+
  //cheack key inputs
  while(1){
      if(PS2_ptr_mouse->rvalid & 0x80 )  {
-		 signed char data = PS2_ptr_mouse-> data ; if(!first_draw)handle_mouse(data);}      // Pointer to PS2_Data
+		 signed char data = PS2_ptr_mouse-> data ; if(!first_draw)handle_mouse(data);
+         
+         volatile char *char_buffer = (volatile char *)CHAR_BUFFER_BASE;
+	 
+		 // Get the character buffer positions
+		 int date_x = map_vga_x_to_char_x(283);
+		 int date_y = map_vga_y_to_char_y(131);
+		 int price_x = map_vga_x_to_char_x(285);
+		 int price_y = map_vga_y_to_char_y(115);
+
+		 int text_width = 12; 
+
+		 // Clear the date region
+		 for (int x = date_x; x < date_x + text_width; x++) {
+			 char_buffer[(date_y * 128) + x] = ' ';
+		 }
+
+		 // Clear the price region
+		 for (int x = price_x; x < price_x + text_width; x++) {
+			 char_buffer[(price_y * 128) + x] = ' ';
+		 }
+
+		 char *date = stocks_arr[current_stock - 1]->dates[window_indices[x_global]];
+		 float curr_price = stocks_arr[current_stock - 1]->values[window_indices[x_global]];
+
+		 char buffer4[20];
+		 snprintf(buffer4, sizeof(buffer4), "%.2f", curr_price);
+
+		 print_string(map_vga_x_to_char_x(283), map_vga_y_to_char_y(131), date);
+		 print_string(map_vga_x_to_char_x(285), map_vga_y_to_char_y(115), buffer4);
+         
+         }      // Pointer to PS2_Data
 
      PS2_data = *(PS2_ptr);//read data reg
 
@@ -10189,6 +10232,8 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
             if(jump > 1) jump--;
             draw_stock(stocks_arr[current_stock - 1]);
         }
+		
+		
 
     }
      
@@ -10418,7 +10463,7 @@ for (int i = 0; i < count; i++) {
 
 // Draw the graph by connecting the normalized points.
 void draw_graph(int *normalized, int count, Stock *s,int *arr) {
-    
+	
 for (int j = 0; j < prev_count - 1; j++) {
     int x0 = GRAPH_WIDTH_PADDING + (int)(j * prev_scale);
     int x1 = GRAPH_WIDTH_PADDING + (int)((j + 1) * prev_scale);
@@ -10439,6 +10484,7 @@ calculate_x_divisions(global_date, count,arr);
 
 // Use a float to avoid integer truncation:
 float xscale = (float)(GRAPH_WIDTH - 1) / (float)(count - 1);
+if(x_global < 0 || x_global > window -1) x_global = 0 ; 
 
  int x_line = GRAPH_WIDTH_PADDING + (int)(x_global * xscale);
  draw_line(prev_x_line,  240-GRAPH_HEIGHT_PADDING-GRAPH_HEIGHT, prev_x_line, 240-GRAPH_HEIGHT_PADDING+1, 0x18e5); 
@@ -10460,6 +10506,35 @@ prev_array[i] = normalized[i];
 }
 prev_scale = xscale;
 prev_x_line = x_line;
+	
+	 volatile char *char_buffer = (volatile char *)CHAR_BUFFER_BASE;
+		 // Get the character buffer positions
+		 int date_x = map_vga_x_to_char_x(283);
+		 int date_y = map_vga_y_to_char_y(131);
+		 int price_x = map_vga_x_to_char_x(285);
+		 int price_y = map_vga_y_to_char_y(115);
+
+		 int text_width = 12; 
+
+		 // Clear the date region
+		 for (int x = date_x; x < date_x + text_width; x++) {
+			 char_buffer[(date_y * 128) + x] = ' ';
+		 }
+
+		 // Clear the price region
+		 for (int x = price_x; x < price_x + text_width; x++) {
+			 char_buffer[(price_y * 128) + x] = ' ';
+		 }
+
+		 char *date = stocks_arr[current_stock - 1]->dates[window_indices[x_global]];
+		 float curr_price = stocks_arr[current_stock - 1]->values[window_indices[x_global]];
+
+		 char buffer4[20];
+		 snprintf(buffer4, sizeof(buffer4), "%.2f", curr_price);
+
+		 print_string(map_vga_x_to_char_x(283), map_vga_y_to_char_y(131), date);
+		 print_string(map_vga_x_to_char_x(285), map_vga_y_to_char_y(115), buffer4);
+	
 
 }
 
@@ -10493,6 +10568,10 @@ print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + step2*2 + offset2), b
 print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + step2*3 + offset2), buffer1); 
 print_string(1, map_vga_y_to_char_y(GRAPH_HEIGHT_PADDING + step2*4 + offset2), buffer);  
 
+	
+	
+	
+	
 }
 
 void calculate_x_divisions(const char *global_date[], int size, int *window_indices) {
@@ -10559,7 +10638,6 @@ int sample_count = sample_data(s, sample_indices, filter_indices, filter_count, 
 //  printf("Temp sample count = %d\n", sample_count);
 //  printf("Displaying from %s to %s\n",s->dates[sample_indices[0]],s->dates[sample_indices[sample_count - 1]]);
 
-int window_indices[GRAPH_WIDTH];
 int window_count = select_window(window_indices, sample_indices, sample_count, GRAPH_WIDTH);
 window = window_count;
 //  printf("Window sample count = %d\n", window_count);
@@ -10572,6 +10650,46 @@ compute_sample_min_max(s, window_indices, window_count, &sample_min, &sample_max
 
 normalize_samples(s, window_indices, window_count, sample_min, sample_max, global_normalized);
 draw_graph(global_normalized, window_count, s, window_indices);
+
+int start = window_indices[0];
+int end = window_indices[window - 1];
+	
+float open = s->values[start];
+float close = s->values[end];
+//char *date = s->dates[x_global];
+//float curr_price = s->values[x_global];
+	
+char buffer[20];
+char buffer1[20];
+char buffer2[20];
+char buffer3[20];
+//char buffer4[20];
+	
+char *interval;
+	
+if(SAMPLE_MODE == 0){
+	interval = "DAYS";
+}else if(SAMPLE_MODE == 1){
+	interval = "WEEKS";
+}else{
+	interval = "MONTHS";
+}
+	
+snprintf(buffer, sizeof(buffer), "%.2f", open);
+snprintf(buffer1, sizeof(buffer1), "%.2f", close);
+snprintf(buffer2, sizeof(buffer2), "%d", SELECTED_YEAR_START);
+snprintf(buffer3, sizeof(buffer3), "%d", YEAR_RANGE);
+//snprintf(buffer4, sizeof(buffer4), "%.2f", curr_price);
+
+strcat(buffer3, " YEARS");
+	
+print_string(map_vga_x_to_char_x(290), map_vga_y_to_char_y(195), buffer);
+print_string(map_vga_x_to_char_x(290), map_vga_y_to_char_y(211), buffer1);
+print_string(map_vga_x_to_char_x(290), map_vga_y_to_char_y(146), buffer2);
+print_string(map_vga_x_to_char_x(290), map_vga_y_to_char_y(179), interval);
+//print_string(map_vga_x_to_char_x(283), map_vga_y_to_char_y(131), date);
+print_string(map_vga_x_to_char_x(285), map_vga_y_to_char_y(162), buffer3);
+//print_string(map_vga_x_to_char_x(285), map_vga_y_to_char_y(115), buffer4);
 }
 
 // Plot a single pixel at (x,y) with the given color.
