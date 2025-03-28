@@ -10197,7 +10197,8 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
      
  if(edge_capture & 0x1){
          
-  if(first_draw){draw_background();first_draw = false;}
+  draw_background();
+  first_draw = false;
             current_stock = 1;					
             draw_stock(&stock1);
 			audio_playback_mono(apple_stock, apple_stock_size);		
@@ -10265,7 +10266,7 @@ right = (data & 0x2) ? 1:0;
 }else if (mousestate == 2){
 mousestate = 0;
     mousey = data;
-}
+
 
 
 // Use a float to avoid integer truncation:
@@ -10298,6 +10299,8 @@ if(mouselocx < 0){ mouselocx = 0 ;}
 if(mouselocx > 275 - GRAPH_WIDTH_PADDING - 1){ mouselocx = 275 - GRAPH_WIDTH_PADDING - 1 ;}
 if(mouselocy < 0){ mouselocy = 0;}
 if(mouselocy > 240){ mouselocy = 240;}	
+
+}
 }
 
 
