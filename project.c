@@ -15,11 +15,11 @@
 #define GRAPH_WIDTH_PADDING 30    // from left
 
 //PS2 Keyboard 
-#define PS2_BASE 0xFF200100 // PS2_Data register address
+#define PS2_BASE 0xFF200108 // PS2_Data register address
 #define PS2_CONTROL 0xFF200104 // PS2_Control register address
 
 //PS2 Mouse 
-#define PS2_BASE_Mouse 0xFF200108 // PS2_Data register address
+#define PS2_BASE_Mouse 0xFF200100 // PS2_Data register address
 
 
 // Mask for checking RVALID bit (bit 15 of PS2_Data)
@@ -111,7 +111,7 @@ int window = GRAPH_WIDTH;
 int mouselocx = GRAPH_WIDTH_PADDING , mouselocy = 240 - GRAPH_HEIGHT_PADDING, mousestate = 0;
 char left = 0, middle = 0, right = 0;
 signed char mousex = 0, mousey = 0;
-Mouse * PS2_ptr_mouse = (Mouse *)PS2_BASE_Mouse;        // Pointer to PS2_Data
+Mouse * PS2_ptr_mouse = ((struct audio_t *)0xff200100);        // Pointer to PS2_Data
 bool first_draw = true;
 int prev_count = 0;
 int prev_array[GRAPH_WIDTH];
@@ -10011,7 +10011,6 @@ char byte1 = 0, byte2 = 0, byte3 = 0;
 
 // PS/2 mouse needs to be reset (must be already plugged in)
 *(PS2_ptr) = 0xFF; // Reset the PS/2 device
-(PS2_ptr_mouse->data) = 0xFF; // Reset the PS/2 device
 
 PS2_ptr_mouse->data = 0xF4 ;
 
@@ -10081,7 +10080,6 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
  //cheack key inputs
  while(1){
      if(PS2_ptr_mouse->rvalid & 0x80 )  {
-		 printf("mouse");
 		 signed char data = PS2_ptr_mouse-> data ; if(!first_draw)handle_mouse(data);}      // Pointer to PS2_Data
 
      PS2_data = *(PS2_ptr);//read data reg
@@ -10199,17 +10197,10 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
      
  if(edge_capture & 0x1){
          
-    //printing new background
-    for(int i=0; i<320; i++){
-         for(int j = 0; j<240; j++){
-             plot_pixel(i,j, graph_screen[i+(j*320)]);
-         }
-     }
-
-    //drawing axis
-    draw_line(40, 220, 300, 220, 0x0000); // x-axis
-    draw_line(40, 220, 40, 20, 0x0000); // y-axis
-
+  if(first_draw){draw_background();first_draw = false;}
+            current_stock = 1;					
+            draw_stock(&stock1);
+			audio_playback_mono(apple_stock, apple_stock_size);		
      // clear edgecap for KEY0
      *Key_edgeCapture_ptr= 0x1;
      
