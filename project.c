@@ -10102,7 +10102,7 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
  //cheack key inputs
  while(1){
      if(PS2_ptr_mouse->rvalid & 0x80 )  {
-		 signed char data = PS2_ptr_mouse-> data ; if(!first_draw)handle_mouse(data);
+	 signed char data = PS2_ptr_mouse-> data ; if(!first_draw)handle_mouse(data);
          
          volatile char *char_buffer = (volatile char *)CHAR_BUFFER_BASE;
 	 
@@ -10334,10 +10334,43 @@ for(int j=0;j<6;j++){
 
 for(int i = 0 ; i<8;i++){
 for(int j=0;j<6;j++){
- plot_pixel(GRAPH_WIDTH_PADDING + mouselocx + j, mouselocy + i - GRAPH_HEIGHT_PADDING,  pointer[6*i+j]);	
+ plot_pixel(GRAPH_WIDTH_PADDING + mouselocx + j , mouselocy + i - GRAPH_HEIGHT_PADDING,  pointer[6*i+j]);	
 }
 }
-
+	
+	
+if(GRAPH_WIDTH_PADDING + mouselocx > 276 && left){
+    if(mouselocy - GRAPH_HEIGHT_PADDING > 24 && mouselocy - GRAPH_HEIGHT_PADDING < 38)
+    {
+        current_stock = 1;
+        draw_stock(stocks_arr[0]);
+        audio_playback_mono(apple_stock, apple_stock_size);
+    }
+    if(mouselocy - GRAPH_HEIGHT_PADDING > 41 && mouselocy  - GRAPH_HEIGHT_PADDING < 55)
+    {
+        current_stock = 2;
+        draw_stock(stocks_arr[1]);
+        audio_playback_mono(amazon_stock, amazon_stock_size);
+    }
+    if(mouselocy - GRAPH_HEIGHT_PADDING > 57 && mouselocy - GRAPH_HEIGHT_PADDING < 70)
+    {
+        current_stock = 3;
+        draw_stock(stocks_arr[2]);
+        audio_playback_mono(google_stock, google_stock_size);
+    }
+    if(mouselocy - GRAPH_HEIGHT_PADDING > 73 && mouselocy - GRAPH_HEIGHT_PADDING < 86)
+    {
+        current_stock = 4;
+        draw_stock(stocks_arr[3]);
+        audio_playback_mono(facebook_stock, facebook_stock_size);
+    }
+    if(mouselocy - GRAPH_HEIGHT_PADDING > 89 && mouselocy - GRAPH_HEIGHT_PADDING < 102)
+    {
+        current_stock = 5;
+        draw_stock(stocks_arr[4]);
+        audio_playback_mono(netflix_stock, netflix_stock_size);
+    }
+}
 	
 	prevx = mouselocx;
 	prevy = mouselocy;
