@@ -121,7 +121,7 @@ int window_indices[GRAPH_WIDTH];
 short int current_color = 0xc618;
 struct audio_t *const audiop = ((struct audio_t *)0xff203040);
           int current_stock = 1;//start at stock 1 for any button
-
+int prevx=GRAPH_WIDTH_PADDING,prevy =240 - GRAPH_HEIGHT_PADDING;
 
 Stock* stocks_arr[5];
 //---------------------------------------------------------------------
@@ -9990,6 +9990,16 @@ int amazon_stock[] = {
 };
 int amazon_stock_size= 16052;
 
+static const int pointer[]  = {
+  0x2104, 0x2104, 0x2104, 0x0000, 0x0000, 0x0000, 
+  0x2104, 0xdefb, 0x2104, 0x2104, 0x0000, 0x0000, 
+  0x2104, 0xdefb, 0xdefb, 0x2104, 0x2104, 0x0000, 
+  0x2104, 0xdefb, 0xdefb, 0xdefb, 0x2104, 0x2104, 
+  0x2104, 0xdefb, 0xdefb, 0xdefb, 0xdefb, 0x2104, 
+  0x2104, 0xdefb, 0xdefb, 0xdefb, 0x5bb1, 0x2104, 
+  0x2104, 0xdefb, 0xdefb, 0x5bb1, 0x2104, 0x2104, 
+  0x2104, 0x2104, 0x2104, 0x2104, 0x2104, 0x0000
+};
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -10311,11 +10321,30 @@ right = (data & 0x2) ? 1:0;
 }else if (mousestate == 2){
 mousestate = 0;
     mousey = data;
+	
+	
 
+for(int i = 0 ; i<8;i++){
+for(int j=0;j<6;j++){
+ plot_pixel(GRAPH_WIDTH_PADDING + prevx + j, prevy + i - GRAPH_HEIGHT_PADDING,   graph_screen[(GRAPH_WIDTH_PADDING + prevx + j) + 320*(prevy + i - GRAPH_HEIGHT_PADDING)]);	  
+  }
+ }
 
+	
+
+for(int i = 0 ; i<8;i++){
+for(int j=0;j<6;j++){
+ plot_pixel(GRAPH_WIDTH_PADDING + mouselocx + j, mouselocy + i - GRAPH_HEIGHT_PADDING,  pointer[6*i+j]);	
+}
+}
+
+	
+	prevx = mouselocx;
+	prevy = mouselocy;
 
 // Use a float to avoid integer truncation:
 x_global = (int)((mouselocx / (float)(GRAPH_WIDTH - 1)) * (window - 1));
+if(mouselocx > 275 - GRAPH_WIDTH_PADDING - 1){x_global = (int)(((275 - GRAPH_WIDTH_PADDING - 1) / (float)(GRAPH_WIDTH - 1)) * (window - 1));}
 float xscale = (float)(GRAPH_WIDTH - 1) / (float)(window - 1);
  int x_line = GRAPH_WIDTH_PADDING + (int)(x_global * xscale);
  draw_line(prev_x_line,  240-GRAPH_HEIGHT_PADDING-GRAPH_HEIGHT, prev_x_line, 240-GRAPH_HEIGHT_PADDING+1, 0x18e5); 
@@ -10341,9 +10370,9 @@ float xscale = (float)(GRAPH_WIDTH - 1) / (float)(window - 1);
     mouselocx += mousex;
     mouselocy += mousey;
 if(mouselocx < 0){ mouselocx = 0 ;}
-if(mouselocx > 275 - GRAPH_WIDTH_PADDING - 1){ mouselocx = 275 - GRAPH_WIDTH_PADDING - 1 ;}
-if(mouselocy < 0){ mouselocy = 0;}
-if(mouselocy > 240){ mouselocy = 240;}	
+if(mouselocx > 319 - GRAPH_WIDTH_PADDING -6){ mouselocx = 319 - 6 - GRAPH_WIDTH_PADDING;}
+if(mouselocy < 240-GRAPH_HEIGHT){ mouselocy = 240-GRAPH_HEIGHT;}
+if(mouselocy > 240 - 7){ mouselocy = 240 - 7;}	
 
 }
 }
