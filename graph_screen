@@ -123,6 +123,7 @@ struct audio_t *const audiop = ((struct audio_t *)0xff203040);
           int current_stock = 1;//start at stock 1 for any button
 int prevx=GRAPH_WIDTH_PADDING,prevy =240 - GRAPH_HEIGHT_PADDING;
 bool sound_playing = false;
+int clear_counter = 0;
 Stock* stocks_arr[5];
 //---------------------------------------------------------------------
 // Global data arrays for one stock
@@ -10345,7 +10346,9 @@ volatile int *Key_edgeCapture_ptr= KEY_ptr + 3;
  //cheack key inputs
  while(1){
      if(PS2_ptr_mouse->rvalid & 0x80 )  {
-	 signed char data = PS2_ptr_mouse-> data ; if(!first_draw && !sound_playing)handle_mouse(data);
+	 signed char data = PS2_ptr_mouse-> data ; 
+	 if(clear_counter > 0){clear_counter -=1; continue;}
+	 if(!first_draw && !sound_playing)handle_mouse(data);
          
          volatile char *char_buffer = (volatile char *)CHAR_BUFFER_BASE;
 	 
@@ -10534,6 +10537,7 @@ return 0;
 //---------------------------------------------------------------------
 
 void audio_playback_mono(int *samples, int n) {
+clear_counter = 50;
 sound_playing = true;
             int i;
 
