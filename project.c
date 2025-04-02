@@ -10537,7 +10537,7 @@ return 0;
 //---------------------------------------------------------------------
 
 void audio_playback_mono(int *samples, int n) {
-clear_counter 50;
+clear_counter = 50;
 sound_playing = true;
             int i;
 
