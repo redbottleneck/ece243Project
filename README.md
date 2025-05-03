@@ -1,91 +1,106 @@
-📈 Stock Market Visualization Dashboard (RISC-V Platform)
+# 📈 Stock Market Visualization Dashboard (RISC-V Platform)
+
 A real-time interactive stock dashboard built for embedded systems using the RISC-V architecture. This project integrates graphical display, PS/2 mouse and keyboard input, and audio playback to offer a fully immersive financial data visualization experience.
 
-🔧 Overview
-This system renders historical stock market data on a VGA display, enabling users to navigate through company stock trends using either a PS/2 mouse or keyboard. Developed for a DE1-SoC-style FPGA running a RISC-V core, it highlights a blend of low-level hardware interfacing with high-level data processing.
+---
 
-🚀 Features
-Pre-loaded Stock Visualization:
+## 🔧 Overview
 
-Display historical data for Apple, Amazon, Google, Meta, and Netflix.
+Designed for an FPGA development board (e.g., DE1-SoC) running a RISC-V core, this system renders historical stock market data on a VGA monitor. Users can explore data interactively through both keyboard and mouse input. The project blends **low-level hardware control** with **efficient financial data processing** for a complete embedded visualization solution.
 
-Navigate stock price trends over customizable time windows (years, months, weeks, days).
+---
 
-User Interaction:
+## 🚀 Features
 
-PS/2 Mouse: Select stocks, inspect data points, and trigger audio playback.
+### 📊 Pre-loaded Stock Visualization
+- Display historical stock price data for:
+  - **Apple**
+  - **Amazon**
+  - **Google**
+  - **Meta**
+  - **Netflix**
+- Toggle between **daily**, **weekly**, and **monthly** sampling.
+- Adjustable time windows (from 1 to 10 years).
 
-PS/2 Keyboard:
+### 🖱 User Interaction
+- **PS/2 Mouse Support**:
+  - Hover to inspect prices and dates.
+  - Click to select stocks and trigger audio playback.
+- **PS/2 Keyboard Support**:
+  - Arrow keys to scroll and zoom data.
+  - Number keys (1–5) to switch stocks.
+  - `+ / -` to modify year range.
+  - Space/H for instructions screen.
 
-Arrow keys: change sampling mode, scroll through data, adjust year range.
+### 🔊 Audio Integration
+- Each stock is associated with an **audio clip** summarizing key data.
+- Audio playback via memory-mapped audio controller (mono output).
 
-Direct keys: switch between stocks.
+### 🎨 Graphical Rendering
+- Custom **VGA driver logic** for:
+  - Drawing axis lines, stock graphs, tooltips, and overlays.
+  - Smooth line-drawing with Bresenham’s algorithm.
+- Real-time updates during interaction.
 
-Hotkeys for showing help/instructions.
+### 📁 Optimized Data Handling
+- Fast filtering of stock values based on parsed UNIX timestamps.
+- Normalization and scaling of y-axis for accurate plotting.
+- Minimal memory footprint with dynamic array reuse.
 
-Audio Integration:
+---
 
-Playback encoded audio clips per stock to enhance interactivity.
+## 🧠 Skills & Technologies Used
 
-Graphical Rendering:
+| Skill Area          | Description                                                                 |
+|---------------------|-----------------------------------------------------------------------------|
+| **Embedded C**      | System logic using memory-mapped I/O, registers, and hardware interfacing   |
+| **VGA Graphics**    | Custom pixel rendering, line drawing, and buffer control                    |
+| **PS/2 Protocols**  | Byte decoding and mouse/keyboard state machines                             |
+| **Audio Driver**    | Mono playback with FIFO buffering and I²S interfacing                       |
+| **Time Handling**   | `time.h` for date parsing, interval computation, and formatting             |
+| **Data Sampling**   | Daily/weekly/monthly aggregations for windowed visualization                |
+| **System Programming** | Event polling, register access, and real-time rendering                 |
+| **Team Collaboration** | Clean modular architecture with consistent documentation and naming     |
 
-Custom VGA driver logic to render graphs, mouse cursor, date/price tooltips.
+---
 
-Interactive overlays that update based on user input.
+## 💡 Usage
 
-Optimized Data Handling:
+1. Connect a **VGA monitor**, **PS/2 mouse**, and **PS/2 keyboard** to the FPGA board.
+2. Flash the board with the compiled **RISC-V binary**.
+3. Interact with the dashboard:
+   - Press `1–5` to switch between different stock datasets.
+   - Use arrow keys and `+/-` to adjust sampling rate and time range.
+   - Hover with the mouse to view dynamic date and price tooltips.
+   - Click stock labels to **trigger audio playback**.
 
-Efficient sampling (daily, weekly, monthly) using pre-parsed timestamps.
+to try the project online go to [cpulator](https://cpulator.01xz.net/?sys=rv32-de1soc) which emulates the project,
+1 near the compile and load button change language to C
+2 copy/paste the project.c code, or copy the raw file and place it into the editor
+3 click compile and load
+4 once its compiled press continue or F3
+5 in the devices tab set irq 22 to a keyboard and irq 23 to a mouse
+6 press H using the keyboard and follow the help page on from the project to use the dashboard
+---
 
-Dynamic normalization and graph scaling for different datasets.
+## 🛠 Future Improvements
 
-🧠 Skills & Technologies Used
-Skill Area	        Implementation Details
-Embedded C    	    Core application logic in low-level C tailored to hardware memory-mapped I/O
-VGA Graphics	      Custom line drawing, pixel plotting, and frame buffer manipulation
-PS/2 Protocols	    Raw byte decoding and state management for mouse and keyboard input
-Audio Driver	      Real-time mono audio streaming via memory-mapped audio controller
-Time Handling  	    Parsing and manipulation of timestamps using time.h for interval-based filtering
-Data Sampling	      Filtering, normalization, and dynamic range scaling of financial time-series data
-System Programming	Direct register access (volatile pointers), low-level event polling, and buffer management
-Team Collaboration	Modular code structure, consistent documentation, and multi-developer integration
+- 📥 **Dynamic stock loading** (via SD card or serial port)
+- 🌐 **Real-time stock updates** through Ethernet or UART
+- 📊 Additional metrics (high/low, volume, trends)
+- 🖼 Enhanced UI design with smoothed mouse cursor rendering
 
+---
 
-💡 Usage
-Connect a VGA monitor, PS/2 keyboard, and mouse to the FPGA board.
+## 👥 Authors
 
-Flash the RISC-V binary containing this project.
+- **Andre Brian Danny**
+- **Rehan Bhatti**
 
-Interact with the interface:
+---
 
-Use keys 1-5 to switch stocks.
+## 📩 Contact
 
-Use arrow keys and +/- to change the year range and sampling mode.
+Feel free to connect via [LinkedIn](https://linkedin.com/in/andrebdanny) or reach out via email at **andrebdanny@gmail.com** if you're interested in discussing this project or other embedded systems applications.
 
-Hover with mouse to view price and date tooltips.
-
-Click stock list to play audio summary.
-
-
-🛠 Future Improvements
-Dynamic loading of stock data (SD card / serial input).
-
-Real-time stock price updates via Ethernet or UART.
-
-Enhanced GUI design with additional metrics (volume, high/low).
-
-Improved pointer rendering and input smoothing.
-
-👥 Authors
-Andre Brian Danny
-Rehan Bhatti
-
-📩 Contact
-Feel free to connect via [Andre Brian Danny](https://www.linkedin.com/in/andre-brian-danny)
-or reach out via email at andrebdanny@gmail.com if you’re interested in discussing this project or similar system-level embedded applications.
-
-
-
-
-
-
+---
