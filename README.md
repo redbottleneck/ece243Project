@@ -82,6 +82,8 @@ to try the project online go to [cpulator](https://cpulator.01xz.net/?sys=rv32-d
 4. once its compiled press continue or F3
 5. in the devices tab set irq 22 to a keyboard and irq 23 to a mouse
 6. press H using the keyboard and follow the help page on from the project to use the dashboard
+
+Note: the mouse moves in the opposite direction in the y axis as the true implementation of the vga graphics has the coordinate axes flipped,all else is the same
 ---
 
 ## 🛠 Future Improvements
