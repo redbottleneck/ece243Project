@@ -75,12 +75,13 @@ Designed for an FPGA development board (e.g., DE1-SoC) running a RISC-V core, th
    - Click stock labels to **trigger audio playback**.
 
 to try the project online go to [cpulator](https://cpulator.01xz.net/?sys=rv32-de1soc) which emulates the project,
-1 near the compile and load button change language to C
-2 copy/paste the project.c code, or copy the raw file and place it into the editor
-3 click compile and load
-4 once its compiled press continue or F3
-5 in the devices tab set irq 22 to a keyboard and irq 23 to a mouse
-6 press H using the keyboard and follow the help page on from the project to use the dashboard
+
+1. near the compile and load button change language to C
+2. copy/paste the project.c code, or copy the raw file and place it into the editor
+3. click compile and load
+4. once its compiled press continue or F3
+5. in the devices tab set irq 22 to a keyboard and irq 23 to a mouse
+6. press H using the keyboard and follow the help page on from the project to use the dashboard
 ---
 
 ## 🛠 Future Improvements
