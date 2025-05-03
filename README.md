@@ -1,6 +1,8 @@
 # 📈 Stock Market Visualization Dashboard (RISC-V Platform)
 
 A real-time interactive stock dashboard built for embedded systems using the RISC-V architecture. This project integrates graphical display, PS/2 mouse and keyboard input, and audio playback to offer a fully immersive financial data visualization experience.
+---
+## here is the [demo](https://youtu.be/rjTGLKv8cxs)
 
 ---
 
@@ -74,7 +76,7 @@ Designed for an FPGA development board (e.g., DE1-SoC) running a RISC-V core, th
    - Hover with the mouse to view dynamic date and price tooltips.
    - Click stock labels to **trigger audio playback**.
 
-to try the project online go to [cpulator](https://cpulator.01xz.net/?sys=rv32-de1soc) which emulates the project, here is the [demo](https://youtu.be/rjTGLKv8cxs)
+to try the project online go to [cpulator](https://cpulator.01xz.net/?sys=rv32-de1soc) which emulates the project.
 
 1. near the compile and load button change language to C
 2. copy/paste the project.c code, or copy the raw file and place it into the editor
